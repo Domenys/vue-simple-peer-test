@@ -1,18 +1,47 @@
 <template>
   <div class="home">
-    <img alt="Vue logo" src="../assets/logo.png">
-    <HelloWorld msg="Welcome to Your Vue.js App"/>
+    <video id="testVideo"></video>
   </div>
 </template>
 
 <script>
-// @ is an alias to /src
-import HelloWorld from '@/components/HelloWorld.vue'
-
+import SimplePeer from 'simple-peer'
 export default {
   name: 'Home',
-  components: {
-    HelloWorld
+  created() {
+    this.getMedia()
+  },
+  methods: {
+    getMedia() {
+      navigator.mediaDevices.getUserMedia({
+        video: true,
+        audio: true
+      }).then(this.gotMedia).catch(() => {})
+    },
+    gotMedia (stream) {
+      let peer1 = new SimplePeer({ initiator: true, stream: stream })
+      let peer2 = new SimplePeer()
+
+      peer1.on('signal', data => {
+        peer2.signal(data)
+      })
+
+      peer2.on('signal', data => {
+        peer1.signal(data)
+      })
+
+      peer2.on('stream', stream => {
+        var video = document.querySelector('video')
+
+        if ('srcObject' in video) {
+          video.srcObject = stream
+        } else {
+          video.src = window.URL.createObjectURL(stream)
+        }
+
+        video.play()
+      })
+    }
   }
 }
 </script>
